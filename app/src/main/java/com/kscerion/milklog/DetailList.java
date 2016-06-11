@@ -1,7 +1,7 @@
 package com.kscerion.milklog;
 
 import android.app.LoaderManager;
-import android.content.Context;
+import android.content.ContentValues;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
@@ -15,8 +15,10 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.SimpleCursorAdapter;
+import android.widget.TextView;
 
 import com.kscerion.milklog.data.DBContract;
 
@@ -65,53 +67,89 @@ public class DetailList extends AppCompatActivity
         String[] fromColumns = {DBContract.MonthLogs.C_DATE, DBContract.MonthLogs.C_MNG_QTY, DBContract.MonthLogs.C_EVE_QTY};
         int[] toViews = {R.id.date_view, R.id.morning_view, R.id.evening_view};
 
-        mAdapter = new SimpleCursorAdapter(this, R.layout.daily_item, null, fromColumns, toViews){
-            @Override
-            public View newView(Context context, Cursor cursor, ViewGroup v) {
-                View x = super.newView(context,cursor,v);
-                EditText editText = (EditText)x.findViewById(R.id.morning_view);
-                editText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-                    @Override
-                    public void onFocusChange(View v, boolean hasFocus) {
-                        if(!hasFocus) {
-                            System.out.println("WEEEEHEEEEE....!!!");
-                        }
-                    }
-                });
-                editText = (EditText)x.findViewById(R.id.evening_view);
-                editText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-                    @Override
-                    public void onFocusChange(View v, boolean hasFocus) {
-                        if(!hasFocus) {
-                            String qty = ((EditText)v).getText().toString();
-                            System.out.println("WEEEEHEEEEE....!!!");
-                        }
-                    }
-                });
-                return x;
-            }
-        };
+        mAdapter = new SimpleCursorAdapter(this, R.layout.daily_item, null, fromColumns, toViews);//{
+//            @Override
+//            public View newView(Context context, Cursor cursor, ViewGroup v) {
+//                View x = super.newView(context,cursor,v);
+//                EditText editText = (EditText)x.findViewById(R.id.morning_view);
+//                editText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+//                    @Override
+//                    public void onFocusChange(View v, boolean hasFocus) {
+//                        if(!hasFocus) {
+//                            System.out.println("WEEEEHEEEEE....!!!");
+//                        }
+//                    }
+//                });
+//                editText = (EditText)x.findViewById(R.id.evening_view);
+//                editText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+//                    @Override
+//                    public void onFocusChange(View v, boolean hasFocus) {
+//                        if(!hasFocus) {
+//                            String qty = ((EditText)v).getText().toString();
+//                            System.out.println("WEEEEHEEEEE....!!!");
+//                        }
+//                    }
+//                });
+//                return x;
+//            }
+//        };
         view.setAdapter(mAdapter);
 
         getLoaderManager().initLoader(0, null, this);
 
         view.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//                EditText mng = ((EditText)view.findViewById(R.id.morning_view));
-//                EditText eng = ((EditText)view.findViewById(R.id.evening_view));
-//                mng.setInputType(InputType.TYPE_CLASS_NUMBER);
-//                eng.setInputType(InputType.TYPE_CLASS_NUMBER);
-//                mng.setClickable(true);
-//                mng.setFocusable(true);
-//                eng.setClickable(true);
-//                eng.setFocusable(true);
-//                eng.setText("0");
-//                mng.setText("0");
-//                Intent intent = new Intent(parent.getContext(), DetailList.class);
-//                String message = String.valueOf(id);
-//                intent.putExtra(ANOTHER_MESSAGE, message);
-//                startActivity(intent);
+            public void onItemClick(AdapterView<?> parent, final View view, int position, final long id) {
+                final ViewGroup viewGroup = (ViewGroup)getLayoutInflater().inflate(R.layout.edit_date, null);
+                EditText mQty = (EditText)viewGroup.findViewById(R.id.mngQty);
+                EditText eQty = (EditText)viewGroup.findViewById(R.id.engQty);
+                mQty.setText(((TextView)view.findViewById(R.id.morning_view)).getText());
+                mQty.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                    @Override
+                    public void onFocusChange(View v, boolean hasFocus) {
+                        if(!hasFocus) {
+                            String qty = ((EditText)v).getText().toString();
+                            ((TextView)view.findViewById(R.id.morning_view)).setText(qty);
+                        }
+                    }
+                });
+
+                eQty.setText(((TextView)view.findViewById(R.id.evening_view)).getText());
+                eQty.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                    @Override
+                    public void onFocusChange(View v, boolean hasFocus) {
+                        if(!hasFocus) {
+                            String qty = ((EditText)v).getText().toString();
+                            ((TextView)view.findViewById(R.id.evening_view)).setText(qty);
+                        }
+                    }
+                });
+
+                int width = (int)(parent.getWidth()*0.75);
+                PopupWindow popupWindow = new PopupWindow(viewGroup,width,400,true);
+                popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
+                    @Override
+                    public void onDismiss() {
+                        String date = ((TextView)view.findViewById(R.id.date_view)).getText().toString();
+                        String mQty = ((TextView)view.findViewById(R.id.morning_view)).getText().toString();
+                        String eQty = ((TextView)view.findViewById(R.id.evening_view)).getText().toString();
+                        ContentValues contentValues = new ContentValues();
+                        contentValues.put(DBContract.MonthLogs.C_MNG_QTY,mQty);
+                        contentValues.put(DBContract.MonthLogs.C_EVE_QTY,eQty);
+                        contentValues.put(DBContract.MonthLogs.C_USER_ID,mSelectionArgs[1]);
+                        contentValues.put(DBContract.MonthLogs.C_DATE,date);
+                        contentValues.put(DBContract.MonthLogs.C_MONTH,mSelectionArgs[0]);
+                        if(getContentResolver().insert(DBContract.MonthLogs.CONTENT_URI,contentValues)==null) {
+                            String selection = DBContract.MonthLogs.C_MONTH+"=? and "
+                                    +DBContract.MonthLogs.C_USER_ID+"=? and "
+                                    +DBContract.MonthLogs.C_DATE+"=?";
+                            String[] selectionArgs = {(String)contentValues.get(DBContract.MonthLogs.C_MONTH),
+                                    (String)contentValues.get(DBContract.MonthLogs.C_USER_ID), (String)contentValues.get(DBContract.MonthLogs.C_DATE)};
+                            getContentResolver().update(DBContract.MonthLogs.CONTENT_URI,contentValues,selection,selectionArgs);
+                        }
+                    }
+                });
+                popupWindow.showAtLocation(findViewById(R.id.zoomba),Gravity.NO_GRAVITY,parent.getWidth()/2-width/2,parent.getHeight()/2);
             }
         });
     }

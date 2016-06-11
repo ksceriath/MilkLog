@@ -91,6 +91,7 @@ public class MilkProvider extends ContentProvider {
             c = db.query(false,getTableFromUri(uri),projection,selection,selectionArgs,null,null,sortOrder,null);
             System.out.print("CURSORY OUTPUT FOR "+uri+" "+c.getCount());
         }
+        c.setNotificationUri(getContext().getContentResolver(),uri);
         return c;
     }
 
@@ -99,6 +100,7 @@ public class MilkProvider extends ContentProvider {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         int i = db.update(getTableFromUri(uri), contentValues, selection, selectionArgs);
         db.close();
+        getContext().getContentResolver().notifyChange(uri,null);
         return i;
     }
 
@@ -107,7 +109,11 @@ public class MilkProvider extends ContentProvider {
 
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         long id = db.insert(getTableFromUri(uri),null,values);
+        if(id==-1) {
+            return null;
+        }
         db.close();
+        getContext().getContentResolver().notifyChange(uri,null);
         return DBContract.TestTab.CONTENT_URI.buildUpon().appendPath(String.valueOf(id)).build();
     }
 

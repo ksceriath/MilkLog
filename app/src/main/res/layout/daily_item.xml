@@ -8,18 +8,16 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"/>
-    <EditText
+    <TextView
         android:id="@+id/morning_view"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
 
-        android:inputType="number"
         android:layout_weight="2"/>
-    <EditText
+    <TextView
         android:id="@+id/evening_view"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
 
-        android:inputType="number"
         android:layout_weight="2"/>
 </LinearLayout>

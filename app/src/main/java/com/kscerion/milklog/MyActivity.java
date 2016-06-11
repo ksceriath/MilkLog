@@ -40,7 +40,7 @@ public class MyActivity extends AppCompatActivity
             }
         }
 
-        String[] fromColumns = {DBContract.Users._ID};
+        String[] fromColumns = {DBContract.Users.C_NAME};
         int[] toViews = {R.id.name_view};
 
         mAdapter = new SimpleCursorAdapter(this, R.layout.list_item, null, fromColumns, toViews);
@@ -96,7 +96,7 @@ public class MyActivity extends AppCompatActivity
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        String[] projection = new String[] {DBContract.Users._ID};
+        String[] projection = new String[] {DBContract.Users._ID,DBContract.Users.C_NAME};
 //        String selection = "(1=1)";
         return new CursorLoader(this, DBContract.Users.CONTENT_URI, projection, mSelection, null, null);
     }

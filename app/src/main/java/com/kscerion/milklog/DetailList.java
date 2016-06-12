@@ -1,5 +1,7 @@
 package com.kscerion.milklog;
 
+import android.app.DatePickerDialog;
+import android.app.Dialog;
 import android.app.LoaderManager;
 import android.content.ContentValues;
 import android.content.CursorLoader;
@@ -7,12 +9,15 @@ import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v7.app.ActionBar.LayoutParams;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.PopupWindow;
@@ -22,7 +27,6 @@ import android.widget.TextView;
 
 import com.kscerion.milklog.data.DBContract;
 
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 public class DetailList extends AppCompatActivity
@@ -32,10 +36,18 @@ public class DetailList extends AppCompatActivity
 
     public static final String ANOTHER_MESSAGE = "com.kscerion.milklog.ANOTHER_MESSAGE";
 
+    public static String[] sMonths = { "Jan","Feb","Mar","Apr",
+                                        "May","Jun","Jul","Aug",
+                                        "Sep","Oct","Nov","Dec"};
+
+    private int mYear;
+    private int mMonth;
+
     static final String[] PROJECTION = {DBContract.TestTab.COLUMN_NAME_NAME};
 
     private String mSelection="";
     private String[] mSelectionArgs = new String[2];
+    private String mUserId="";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,14 +67,17 @@ public class DetailList extends AppCompatActivity
 
         Intent intent = this.getIntent();
         if(intent != null) {
-            String userId = intent.getStringExtra(DetailList.ANOTHER_MESSAGE);
-            if(userId != null && !"".equals(userId)) {
-                String month = new SimpleDateFormat("yyyyMM").format(Calendar.getInstance().getTime());
-                mSelectionArgs[0] = month;
-                mSelectionArgs[1] = userId;
+            mUserId = intent.getStringExtra(DetailList.ANOTHER_MESSAGE);
+            if(mUserId != null && !"".equals(mUserId)) {
+                Calendar c = Calendar.getInstance();
+                mYear = +c.get(Calendar.YEAR);
+                mMonth =+c.get(Calendar.MONTH);
+//                mDate = new SimpleDateFormat("yyyyMM").format(Calendar.getInstance().getTime());
                 mSelection = DBContract.MonthLogs.C_MONTH + " = ? AND " + DBContract.MonthLogs.C_USER_ID + " = ?";
             }
         }
+
+        ((Button)findViewById(R.id.date_pick)).setText(sMonths[mMonth]+" "+mYear);
 
         String[] fromColumns = {DBContract.MonthLogs.C_DATE, DBContract.MonthLogs.C_MNG_QTY, DBContract.MonthLogs.C_EVE_QTY};
         int[] toViews = {R.id.date_view, R.id.morning_view, R.id.evening_view};
@@ -154,10 +169,25 @@ public class DetailList extends AppCompatActivity
         });
     }
 
+    public void changeDate(View v) {
+        DialogFragment dialogFragment = new DatePickerFragment();
+        dialogFragment.setStyle(DialogFragment.STYLE_NO_TITLE,0);
+        dialogFragment.show(getSupportFragmentManager(),"datepick");
+    }
+
+    public void setDate(int year,int month) {
+        mYear = year;
+        mMonth = month;
+        ((Button)findViewById(R.id.date_pick)).setText(sMonths[month]+" "+year);
+        getLoaderManager().restartLoader(0,null,this);
+    }
+
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         String[] projection = new String[] {DBContract.MonthLogs._ID,DBContract.MonthLogs.C_DATE, DBContract.MonthLogs.C_MNG_QTY, DBContract.MonthLogs.C_EVE_QTY};
         mSelection = "(" + mSelection + ")";
+        mSelectionArgs[0] = ""+mYear+mMonth;
+        mSelectionArgs[1] = mUserId;
         return new CursorLoader(this, DBContract.MonthLogs.CONTENT_URI, projection, mSelection, mSelectionArgs, null);
     }
 
@@ -170,5 +200,16 @@ public class DetailList extends AppCompatActivity
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
         mAdapter.swapCursor(null);
+    }
+
+    public static class DatePickerFragment extends DialogFragment implements DatePickerDialog.OnDateSetListener {
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            return new DatePickerDialog(getActivity(), this, 2000,1,1);
+        }
+
+        public void onDateSet(DatePicker datePicker, int year, int month, int date) {
+            ((DetailList)getActivity()).setDate(year,month);
+        }
     }
 }

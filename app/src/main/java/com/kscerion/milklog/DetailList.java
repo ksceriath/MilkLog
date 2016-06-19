@@ -1,7 +1,5 @@
 package com.kscerion.milklog;
 
-import android.app.DatePickerDialog;
-import android.app.Dialog;
 import android.app.LoaderManager;
 import android.content.ContentValues;
 import android.content.CursorLoader;
@@ -9,24 +7,24 @@ import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
 import android.support.v7.app.ActionBar.LayoutParams;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.DatePicker;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.SimpleCursorAdapter;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.kscerion.milklog.data.DBContract;
 
+import java.util.Arrays;
 import java.util.Calendar;
 
 public class DetailList extends AppCompatActivity
@@ -72,43 +70,53 @@ public class DetailList extends AppCompatActivity
                 Calendar c = Calendar.getInstance();
                 mYear = +c.get(Calendar.YEAR);
                 mMonth =+c.get(Calendar.MONTH);
-//                mDate = new SimpleDateFormat("yyyyMM").format(Calendar.getInstance().getTime());
                 mSelection = DBContract.MonthLogs.C_MONTH + " = ? AND " + DBContract.MonthLogs.C_USER_ID + " = ?";
             }
         }
 
-        ((Button)findViewById(R.id.date_pick)).setText(sMonths[mMonth]+" "+mYear);
-
         String[] fromColumns = {DBContract.MonthLogs.C_DATE, DBContract.MonthLogs.C_MNG_QTY, DBContract.MonthLogs.C_EVE_QTY};
         int[] toViews = {R.id.date_view, R.id.morning_view, R.id.evening_view};
 
-        mAdapter = new SimpleCursorAdapter(this, R.layout.daily_item, null, fromColumns, toViews);//{
-//            @Override
-//            public View newView(Context context, Cursor cursor, ViewGroup v) {
-//                View x = super.newView(context,cursor,v);
-//                EditText editText = (EditText)x.findViewById(R.id.morning_view);
-//                editText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-//                    @Override
-//                    public void onFocusChange(View v, boolean hasFocus) {
-//                        if(!hasFocus) {
-//                            System.out.println("WEEEEHEEEEE....!!!");
-//                        }
-//                    }
-//                });
-//                editText = (EditText)x.findViewById(R.id.evening_view);
-//                editText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-//                    @Override
-//                    public void onFocusChange(View v, boolean hasFocus) {
-//                        if(!hasFocus) {
-//                            String qty = ((EditText)v).getText().toString();
-//                            System.out.println("WEEEEHEEEEE....!!!");
-//                        }
-//                    }
-//                });
-//                return x;
-//            }
-//        };
-        view.setAdapter(mAdapter);
+        mAdapter = new SimpleCursorAdapter(this, R.layout.daily_item, null, fromColumns, toViews);        view.setAdapter(mAdapter);
+
+        Spinner monthSpinner = (Spinner) findViewById(R.id.month);
+        ArrayAdapter<CharSequence> monthAdapter = ArrayAdapter.createFromResource(this, R.array.months, android.R.layout.simple_spinner_item);
+        monthSpinner.setAdapter(monthAdapter);
+        monthSpinner.setSelection(mMonth-1);
+        monthSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if(view != null) {
+                    mMonth=position+1;
+                    getLoaderManager().restartLoader(0,null,(DetailList)parent.getContext());
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+        Spinner yearSpinner = (Spinner) findViewById(R.id.year);
+        ArrayAdapter<String> yearAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item);
+        yearAdapter.addAll(Arrays.asList(new String[] {"2015","2016","2017"}));
+        yearSpinner.setAdapter(yearAdapter);
+        yearSpinner.setSelection(1);
+        yearSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if(view != null) {
+                    mYear = Integer.parseInt(((TextView)view).getText().toString());
+                    getLoaderManager().restartLoader(0,null,(DetailList)parent.getContext());
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
 
         getLoaderManager().initLoader(0, null, this);
 
@@ -169,19 +177,6 @@ public class DetailList extends AppCompatActivity
         });
     }
 
-    public void changeDate(View v) {
-        DialogFragment dialogFragment = new DatePickerFragment();
-        dialogFragment.setStyle(DialogFragment.STYLE_NO_TITLE,0);
-        dialogFragment.show(getSupportFragmentManager(),"datepick");
-    }
-
-    public void setDate(int year,int month) {
-        mYear = year;
-        mMonth = month;
-        ((Button)findViewById(R.id.date_pick)).setText(sMonths[month]+" "+year);
-        getLoaderManager().restartLoader(0,null,this);
-    }
-
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         String[] projection = new String[] {DBContract.MonthLogs._ID,DBContract.MonthLogs.C_DATE, DBContract.MonthLogs.C_MNG_QTY, DBContract.MonthLogs.C_EVE_QTY};
@@ -202,14 +197,4 @@ public class DetailList extends AppCompatActivity
         mAdapter.swapCursor(null);
     }
 
-    public static class DatePickerFragment extends DialogFragment implements DatePickerDialog.OnDateSetListener {
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            return new DatePickerDialog(getActivity(), this, 2000,1,1);
-        }
-
-        public void onDateSet(DatePicker datePicker, int year, int month, int date) {
-            ((DetailList)getActivity()).setDate(year,month);
-        }
-    }
 }

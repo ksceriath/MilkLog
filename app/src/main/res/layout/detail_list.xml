@@ -3,13 +3,30 @@
     android:orientation="vertical"
     android:layout_height="match_parent" android:layout_width="match_parent" android:id="@+id/zoomba">
 
-    <Button
+<!--    <DatePicker
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/date_field"
+        android:calendarViewShown="false"
+        android:spinnersShown="true"
+        android:datePickerMode="spinner"/>-->
+
+    <Spinner android:id="@+id/year"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <Spinner android:id="@+id/month"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+<!--    <Button
         android:id="@+id/date_pick"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="##DATE##"
         android:onClick="changeDate"
-        android:layout_gravity="right"/>
+        android:layout_gravity="right"
+        style="?android:attr/spinnerStyle"/>-->
 
     <ListView android:id="@+id/list"
         android:layout_width="match_parent" android:layout_height="match_parent">

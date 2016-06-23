@@ -22,6 +22,7 @@ public class DBContract {
     public static class Users implements BaseColumns {
         public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath(PATH_USERS).build();          // Lists all the customers
         public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE+"/"+CONTENT_AUTHORITY+"/"+PATH_USERS;
+        public static final String ITEM_CONTENT_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE+"/"+CONTENT_AUTHORITY+"/"+PATH_USERS;
         public static final String TABLE_NAME = "Users";
         public static final String C_NAME = "Name";
         public static final String C_ADDRESS = "Address";
@@ -31,31 +32,12 @@ public class DBContract {
     public static class MonthLogs implements BaseColumns {
         public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath(PATH_MONTHLOGS).build();
         public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE+"/"+CONTENT_AUTHORITY+"/"+ PATH_MONTHLOGS;
+        public static final String ITEM_CONTENT_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE+"/"+CONTENT_AUTHORITY+"/"+ PATH_MONTHLOGS;
         public static final String TABLE_NAME = "MonthLogs";
         public static final String C_MONTH = "Month";
         public static final String C_USER_ID = "UserID";
         public static final String C_DATE = "Date";
         public static final String C_MNG_QTY = "MorningQuantity";
         public static final String C_EVE_QTY = "EveningQuantity";
-    }
-
-    public static class Logs implements BaseColumns {
-        public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath(PATH_LOGS).build();
-        public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE+"/"+CONTENT_AUTHORITY+"/"+PATH_LOGS;
-        public static final String TABLE_NAME = "Logs";
-        public static final String C_DATE = "Date";
-        public static final String C_MNG_QTY = "MorningQuantity";
-        public static final String C_ENG_QTY = "EveningQuantity";
-    }
-
-    public static class TestTab implements BaseColumns {
-        public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath(PATH_TESTTAB).build();
-        public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE+"/"+CONTENT_AUTHORITY+"/"+PATH_TESTTAB;
-        public static final String TABLE_NAME = "TestTab";
-        public static final String COLUMN_NAME_NAME = "Name";
-
-        public static Uri buildNameUri(String name) {
-            return CONTENT_URI.buildUpon().appendPath(name).build();
-        }
     }
 }

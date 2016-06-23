@@ -9,7 +9,7 @@ import android.database.sqlite.SQLiteOpenHelper;
  */
 public class DBHelper extends SQLiteOpenHelper {
 
-    public static final int DATABASE_VERSION = 4;
+    public static final int DATABASE_VERSION = 6;
     public static final String DATABASE_NAME = "MilkLog.db";
 
     public DBHelper(Context context) {
@@ -32,11 +32,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     private final String TEXT = " TEXT ";
     private final String INTEGER = " INTEGER ";
-    private final String[] SQL_CREATE_ENTRIES = {"CREATE TABLE " +
-            DBContract.TestTab.TABLE_NAME + "(" +
-            DBContract.TestTab._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
-            DBContract.TestTab.COLUMN_NAME_NAME + TEXT +
-            ") ",
+    private final String[] SQL_CREATE_ENTRIES = {
             "CREATE TABLE " +
                     DBContract.Users.TABLE_NAME + "(" +
                     DBContract.Users._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -57,9 +53,10 @@ public class DBHelper extends SQLiteOpenHelper {
 
     };
     private final String[] SQL_DELETE_ENTRIES = {
-            "DROP TABLE IF EXISTS " + DBContract.TestTab.TABLE_NAME,
             "DROP TABLE IF EXISTS " + DBContract.Users.TABLE_NAME,
-            "DROP TABLE IF EXISTS " + DBContract.MonthLogs.TABLE_NAME
+            "DROP TABLE IF EXISTS " + DBContract.MonthLogs.TABLE_NAME,
+            "DROP TABLE IF EXISTS TEStTAB",
+            "DROP TABLE IF EXISTS LOG"
     };
 
 }

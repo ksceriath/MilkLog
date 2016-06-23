@@ -43,8 +43,6 @@ public class DetailList extends AppCompatActivity
     private int mMonth;
     private TextView mTotalQty;
 
-    static final String[] PROJECTION = {DBContract.TestTab.COLUMN_NAME_NAME};
-
     private String mSelection="";
     private String[] mSelectionArgs = new String[2];
     private String mUserId="";
@@ -153,7 +151,6 @@ public class DetailList extends AppCompatActivity
                     getLoaderManager().restartLoader(0,null,(DetailList)parent.getContext());
                 }
             }
-
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
 
@@ -173,7 +170,6 @@ public class DetailList extends AppCompatActivity
                     getLoaderManager().restartLoader(0,null,(DetailList)parent.getContext());
                 }
             }
-
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
 
@@ -197,6 +193,32 @@ public class DetailList extends AppCompatActivity
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         System.out.println(data.getCount());
+        if(data.getCount()==0) {
+            int month = Integer.parseInt(mSelectionArgs[0].substring(4));
+            int year = Integer.parseInt(mSelectionArgs[0].substring(0,4));
+            int days = 0;
+            switch(month) {
+                case 1:case 3:case 5:case 7:case 8:case 10:case 12:
+                    days = 31;
+                    break;
+                case 4:case 6:case 9:case 11:
+                    days = 30;
+                    break;
+                case 2:
+                    days = (year%4 == 0) ? 29 : 28;
+                    break;
+            }
+            ContentValues[] values = new ContentValues[days];
+            for(int i=1; i<=days; i++) {
+                String date = (i/10==0) ? "0" : "";
+                date = date + i;
+                values[i-1] = new ContentValues();
+                values[i-1].put(DBContract.MonthLogs.C_MONTH, mSelectionArgs[0]);
+                values[i-1].put(DBContract.MonthLogs.C_USER_ID, mSelectionArgs[1]);
+                values[i-1].put(DBContract.MonthLogs.C_DATE, date);
+            }
+            getContentResolver().bulkInsert(DBContract.MonthLogs.CONTENT_URI, values);
+        }
         int total = 0;
         while(data.moveToNext()) {
             total = total + data.getInt(2)+data.getInt(3);

@@ -18,18 +18,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".DisplayMessageActivity"
-            android:label="@string/title_activity_display_message"
-            android:parentActivityName=".MyActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.kscerion.milklog.MyActivity" />
-        </activity>
-        <activity android:name=".DetailList"></activity>
-        <activity android:name=".CreateActivity"
-            android:label="Create User"
-            android:parentActivityName=".MyActivity"/>
+        <activity android:name=".DetailList" android:label="Logs"></activity>
+        <activity android:name=".CreateActivity" android:label="New Customer"/>
 
         <provider
             android:authorities="com.kscerion.milklog"

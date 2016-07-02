@@ -9,7 +9,7 @@ import android.database.sqlite.SQLiteOpenHelper;
  */
 public class DBHelper extends SQLiteOpenHelper {
 
-    public static final int DATABASE_VERSION = 6;
+    public static final int DATABASE_VERSION = 8;
     public static final String DATABASE_NAME = "MilkLog.db";
 
     public DBHelper(Context context) {
@@ -36,8 +36,8 @@ public class DBHelper extends SQLiteOpenHelper {
             "CREATE TABLE " +
                     DBContract.Users.TABLE_NAME + "(" +
                     DBContract.Users._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
-                    DBContract.Users.C_NAME + TEXT + "," +
-                    DBContract.Users.C_NICKNAME + TEXT + "," +
+                    DBContract.Users.C_NAME + TEXT + " NOT NULL," +
+//                    DBContract.Users.C_NICKNAME + TEXT + "," +
                     DBContract.Users.C_ADDRESS + TEXT +
                     ") ",
             "CREATE TABLE " +

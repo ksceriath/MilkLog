@@ -26,7 +26,7 @@ public class DBContract {
         public static final String TABLE_NAME = "Users";
         public static final String C_NAME = "Name";
         public static final String C_ADDRESS = "Address";
-        public static final String C_NICKNAME = "NickName";
+//        public static final String C_NICKNAME = "NickName";
     }
 
     public static class MonthLogs implements BaseColumns {

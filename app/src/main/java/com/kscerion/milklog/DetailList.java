@@ -25,27 +25,34 @@ import android.widget.TextView;
 
 import com.kscerion.milklog.data.DBContract;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 
 public class DetailList extends AppCompatActivity
     implements LoaderManager.LoaderCallbacks<Cursor> {
 
+    public static final String USER_ID = "com.kscerion.milklog.USER_ID";
+    public static final String USER_NAME = "com.kscerion.milklog.USER_NAME";
+
     SimpleCursorAdapter mAdapter;
+    ListView mDailyListView;
 
-    public static final String ANOTHER_MESSAGE = "com.kscerion.milklog.ANOTHER_MESSAGE";
-
-    public static String[] sMonths = { "Jan","Feb","Mar","Apr",
-                                        "May","Jun","Jul","Aug",
-                                        "Sep","Oct","Nov","Dec"};
+//    public static String[] sMonths = { "Jan","Feb","Mar","Apr",
+//                                        "May","Jun","Jul","Aug",
+//                                        "Sep","Oct","Nov","Dec"};
+    private Collection<String> mAvailableYears;
 
     private int mYear;
     private int mMonth;
+    private int mStartYear = 2000;
+
     private TextView mTotalQty;
 
     private String mSelection="";
     private String[] mSelectionArgs = new String[2];
     private String mUserId="";
+    private String mUserName="";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,37 +62,39 @@ public class DetailList extends AppCompatActivity
 
         mTotalQty = (TextView) findViewById(R.id.total_milk);
 
-        ListView dailyList = (ListView) findViewById(R.id.list);
+        mDailyListView = (ListView) findViewById(R.id.list);
         ProgressBar progressBar = new ProgressBar(this);
 
         progressBar.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT,
                 LayoutParams.WRAP_CONTENT, Gravity.CENTER));
         progressBar.setIndeterminate(true);
-        dailyList.setEmptyView(progressBar);
+        mDailyListView.setEmptyView(progressBar);
         ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
         root.addView(progressBar);
 
         Intent intent = this.getIntent();
         if(intent != null) {
-            mUserId = intent.getStringExtra(DetailList.ANOTHER_MESSAGE);
+            mUserId = intent.getStringExtra(DetailList.USER_ID);
+            mUserName = intent.getStringExtra(DetailList.USER_NAME);
             if(mUserId != null && !"".equals(mUserId)) {
                 Calendar c = Calendar.getInstance();
                 mYear = c.get(Calendar.YEAR);
-                mMonth = c.get(Calendar.MONTH);
+                mMonth = c.get(Calendar.MONTH)+1;
                 mSelection = DBContract.MonthLogs.C_MONTH + " = ? AND " + DBContract.MonthLogs.C_USER_ID + " = ?";
             }
         }
+
+        ((TextView)root.findViewById(R.id.user_name)).setText(mUserName);
 
         String[] fromColumns = {DBContract.MonthLogs.C_DATE, DBContract.MonthLogs.C_MNG_QTY, DBContract.MonthLogs.C_EVE_QTY};
         int[] toViews = {R.id.date_view, R.id.morning_view, R.id.evening_view};
 
         mAdapter = new SimpleCursorAdapter(this, R.layout.daily_item, null, fromColumns, toViews);
-        dailyList.setAdapter(mAdapter);
-
+        mDailyListView.setAdapter(mAdapter);
 
         getLoaderManager().initLoader(0, null, this);
 
-        dailyList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        mDailyListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, final View view, int position, final long id) {
                 final ViewGroup viewGroup = (ViewGroup)getLayoutInflater().inflate(R.layout.edit_date, null);
@@ -118,6 +127,10 @@ public class DetailList extends AppCompatActivity
                         }
                     }
                 });
+
+                ((TextView)viewGroup.findViewById(R.id.edit_date_date))
+                        .setText(getResources().getStringArray(R.array.months)[mMonth-1]+" "+
+                                ((TextView)view.findViewById(R.id.date_view)).getText());
 
                 int width = (int)(parent.getWidth()*0.75);
                 PopupWindow popupWindow = new PopupWindow(viewGroup,width,400,true);
@@ -159,9 +172,9 @@ public class DetailList extends AppCompatActivity
 
         Spinner yearSpinner = (Spinner) findViewById(R.id.year);
         ArrayAdapter<String> yearAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item);
-        yearAdapter.addAll(Arrays.asList(new String[] {"2015","2016","2017"}));
+        yearAdapter.addAll(getAvailableYears());
         yearSpinner.setAdapter(yearAdapter);
-        yearSpinner.setSelection(1);
+        yearSpinner.setSelection(Calendar.getInstance().get(Calendar.YEAR)-mStartYear);
         yearSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -219,19 +232,29 @@ public class DetailList extends AppCompatActivity
             }
             getContentResolver().bulkInsert(DBContract.MonthLogs.CONTENT_URI, values);
         }
-        int total = 0;
+        double total = 0;
         while(data.moveToNext()) {
-            total = total + data.getInt(2)+data.getInt(3);
+            total = total + data.getDouble(2)+data.getDouble(3);
         }
         mTotalQty.setText(""+total);
         System.out.println(total);
         mAdapter.swapCursor(data);
+        mDailyListView.setSelectionFromTop(Calendar.getInstance().get(Calendar.DATE)-1,mDailyListView.getHeight()/2);
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
         mAdapter.swapCursor(null);
     }
+
+//    @Override
+//    public boolean onTouchEvent(MotionEvent event) {
+//        int action = MotionEventCompat.getActionMasked(event);
+//        MotionEvent.
+//
+//        return true;
+//    }
+
 
     private class AsyncUpdater extends AsyncTask<ContentValues, Void, Void> {
         @Override
@@ -245,5 +268,16 @@ public class DetailList extends AppCompatActivity
             getContentResolver().update(DBContract.MonthLogs.CONTENT_URI,content,selection,selectionArgs);
             return null;
         }
+    }
+
+    private Collection<String> getAvailableYears() {
+        if(mAvailableYears==null) {
+            int lastYear = 5 + Calendar.getInstance().get(Calendar.YEAR);
+            mAvailableYears = new ArrayList<>();
+            for(int i=mStartYear; i<=lastYear; i++) {
+                mAvailableYears.add(""+i);
+            }
+        }
+        return mAvailableYears;
     }
 }

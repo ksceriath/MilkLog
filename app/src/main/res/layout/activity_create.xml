@@ -1,25 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" -->
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal" android:layout_width="match_parent"
+    android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <android.support.v7.widget.AppCompatTextView
-    android:layout_width="0dp"
-    android:layout_height="wrap_content"
-    android:layout_weight="1"
-    android:text="NAME"
-    android:gravity="right"
-    android:textSize="@dimen/activity_vertical_margin"/>
-
-    <EditText android:id="@+id/edit_message"
-    android:layout_width="0dp"
-    android:layout_height="wrap_content"
-    android:layout_weight="1"
-    android:hint="@string/edit_message" />
-
+    <EditText android:id="@+id/name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:textAlignment="center"
+        android:textSize="20sp"
+        android:hint="@string/name" />
+    <EditText
+        android:id="@+id/address"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:textSize="15sp"
+        android:gravity="end"
+        android:hint="@string/address" />
     <Button android:layout_height="wrap_content"
-    android:layout_width="wrap_content"
-    android:text="@string/button_create"
-    android:onClick="insertName" />
-
+        android:layout_width="wrap_content"
+        android:text="@string/button_create"
+        android:textSize="15sp"
+        android:layout_gravity="end"
+        android:onClick="submit" />
 </LinearLayout>

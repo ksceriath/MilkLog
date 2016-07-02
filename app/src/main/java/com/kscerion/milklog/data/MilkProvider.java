@@ -7,6 +7,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 
+import java.util.Map;
+
 /**
  * Created by ksceriath on 19-05-2016.
  */
@@ -87,11 +89,16 @@ public class MilkProvider extends ContentProvider {
     public Uri insert(Uri uri, ContentValues values) {
 
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        for(Map.Entry x : values.valueSet()) {
+            if(((String)x.getValue()).equals("")) {
+                x.setValue(null);
+            }
+        }
         long id = db.insert(getTableFromUri(uri),null,values);
         if(id==-1) {
+            db.close();
             return null;
         }
-        db.close();
         getContext().getContentResolver().notifyChange(uri,null);
         return uri.buildUpon().appendPath(String.valueOf(id)).build();
     }

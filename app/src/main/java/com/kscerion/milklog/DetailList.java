@@ -38,9 +38,6 @@ public class DetailList extends AppCompatActivity
     SimpleCursorAdapter mAdapter;
     ListView mDailyListView;
 
-//    public static String[] sMonths = { "Jan","Feb","Mar","Apr",
-//                                        "May","Jun","Jul","Aug",
-//                                        "Sep","Oct","Nov","Dec"};
     private Collection<String> mAvailableYears;
 
     private int mYear;
@@ -101,45 +98,22 @@ public class DetailList extends AppCompatActivity
                 EditText mQty = (EditText)viewGroup.findViewById(R.id.mngQty);
                 EditText eQty = (EditText)viewGroup.findViewById(R.id.engQty);
                 mQty.setText(((TextView)view.findViewById(R.id.morning_view)).getText());
-                mQty.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-                    @Override
-                    public void onFocusChange(View v, boolean hasFocus) {
-                        if(!hasFocus) {
-                            String qty = ((EditText)v).getText().toString();
-                            ((TextView)view.findViewById(R.id.morning_view)).setText(qty);
-                            TextView tv1 = (TextView)viewGroup.findViewById(R.id.engQty);
-                            qty = tv1.getText().toString();
-                            ((TextView)view.findViewById(R.id.evening_view)).setText(qty);
-                        }
-                    }
-                });
-
                 eQty.setText(((TextView)view.findViewById(R.id.evening_view)).getText());
-                eQty.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-                    @Override
-                    public void onFocusChange(View v, boolean hasFocus) {
-                        if(!hasFocus) {
-                            String qty = ((EditText)v).getText().toString();
-                            ((TextView)view.findViewById(R.id.evening_view)).setText(qty);
-                            TextView tv1 = (TextView)viewGroup.findViewById(R.id.mngQty);
-                            qty = tv1.getText().toString();
-                            ((TextView)view.findViewById(R.id.morning_view)).setText(qty);
-                        }
-                    }
-                });
 
                 ((TextView)viewGroup.findViewById(R.id.edit_date_date))
                         .setText(getResources().getStringArray(R.array.months)[mMonth-1]+" "+
                                 ((TextView)view.findViewById(R.id.date_view)).getText());
 
                 int width = (int)(parent.getWidth()*0.75);
-                PopupWindow popupWindow = new PopupWindow(viewGroup,width,400,true);
-                popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
+                int height = (int)(2*view.getHeight());
+                final PopupWindow popupWindow = new PopupWindow(viewGroup,width,height,true);
+
+                viewGroup.findViewById(R.id.OK_edit_date).setOnClickListener(new View.OnClickListener() {
                     @Override
-                    public void onDismiss() {
+                    public void onClick(View v) {
                         String date = ((TextView)view.findViewById(R.id.date_view)).getText().toString();
-                        String mQty = ((TextView)view.findViewById(R.id.morning_view)).getText().toString();
-                        String eQty = ((TextView)view.findViewById(R.id.evening_view)).getText().toString();
+                        String mQty = ((EditText)viewGroup.findViewById(R.id.mngQty)).getText().toString();
+                        String eQty = ((EditText)viewGroup.findViewById(R.id.engQty)).getText().toString();
                         ContentValues contentValues = new ContentValues();
                         contentValues.put(DBContract.MonthLogs.C_MNG_QTY,mQty);
                         contentValues.put(DBContract.MonthLogs.C_EVE_QTY,eQty);
@@ -147,6 +121,14 @@ public class DetailList extends AppCompatActivity
                         contentValues.put(DBContract.MonthLogs.C_DATE,date);
                         contentValues.put(DBContract.MonthLogs.C_MONTH,mSelectionArgs[0]);
                         new AsyncUpdater().execute(contentValues);
+                        popupWindow.dismiss();
+                    }
+                });
+
+                viewGroup.findViewById(R.id.CANCEL_edit_date).setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        popupWindow.dismiss();
                     }
                 });
                 popupWindow.showAtLocation(findViewById(R.id.zoomba),Gravity.NO_GRAVITY,parent.getWidth()/2-width/2,parent.getHeight()/2);
@@ -246,15 +228,6 @@ public class DetailList extends AppCompatActivity
     public void onLoaderReset(Loader<Cursor> loader) {
         mAdapter.swapCursor(null);
     }
-
-//    @Override
-//    public boolean onTouchEvent(MotionEvent event) {
-//        int action = MotionEventCompat.getActionMasked(event);
-//        MotionEvent.
-//
-//        return true;
-//    }
-
 
     private class AsyncUpdater extends AsyncTask<ContentValues, Void, Void> {
         @Override

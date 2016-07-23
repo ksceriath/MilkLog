@@ -41,11 +41,9 @@ public class CreateActivity extends AppCompatActivity {
 
     public void insertUser(View view) {
         String name = ((EditText) findViewById(R.id.name)).getText().toString();
-//        String nickName = ((EditText) findViewById(R.id.nickname)).getText().toString();
         String address = ((EditText) findViewById(R.id.address)).getText().toString();
         ContentValues values = new ContentValues();
         values.put(DBContract.Users.C_NAME, name);
-//        values.put(DBContract.Users.C_NICKNAME, nickName);
         values.put(DBContract.Users.C_ADDRESS, address);
         Uri uri = getContentResolver().insert(DBContract.Users.CONTENT_URI,values);
         System.out.println(uri);

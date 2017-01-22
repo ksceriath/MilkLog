@@ -4,6 +4,8 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.io.File;
+
 /**
  * Created by ksceriath on 15-05-2016.
  */
@@ -11,9 +13,12 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public static final int DATABASE_VERSION = 9;
     public static final String DATABASE_NAME = "MilkLog.db";
+    public static File DATABASE_FILE;
 
     public DBHelper(Context context) {
         super(context,DATABASE_NAME,null,DATABASE_VERSION);
+        DATABASE_FILE = context.getDatabasePath(DATABASE_NAME);
+        System.out.println(context.getDatabasePath(DATABASE_NAME));
     }
 
     public void  onCreate(SQLiteDatabase db) {
@@ -37,7 +42,6 @@ public class DBHelper extends SQLiteOpenHelper {
                     DBContract.Users.TABLE_NAME + "(" +
                     DBContract.Users._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
                     DBContract.Users.C_NAME + TEXT + " NOT NULL," +
-//                    DBContract.Users.C_NICKNAME + TEXT + "," +
                     DBContract.Users.C_ADDRESS + TEXT +
                     ") ",
             "CREATE TABLE " +

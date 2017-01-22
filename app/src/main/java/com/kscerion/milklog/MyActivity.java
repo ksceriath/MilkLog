@@ -1,13 +1,18 @@
 package com.kscerion.milklog;
 
+import android.app.AlertDialog;
 import android.app.LoaderManager;
 import android.content.CursorLoader;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
+import android.database.CursorWrapper;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,6 +24,14 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
 import com.kscerion.milklog.data.DBContract;
+import com.kscerion.milklog.data.DBHelper;
+import com.kscerion.milklog.util.FilterCursorWrapper;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
 
 public class MyActivity extends AppCompatActivity
         implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -27,6 +40,8 @@ public class MyActivity extends AppCompatActivity
     SimpleCursorAdapter mAdapter;
     private String mSelection="";
     public View mSelectedItem;
+    private boolean mImportStatus = false;
+    private Cursor mFilterCursor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,19 +111,23 @@ public class MyActivity extends AppCompatActivity
                 if(mSelectedItem !=  view) {
                     view.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
                     mSelectedItem = view;
-//                view.setSelected(true);
                     ((FloatingActionButton) findViewById(R.id.create)).setVisibility(View.INVISIBLE);
                     FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.delete);
                     fab.setVisibility(View.VISIBLE);
                     fab.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            getContentResolver().delete(DBContract.Users.CONTENT_URI, DBContract.Users._ID+"="+id,null);
-                            getContentResolver().delete(DBContract.MonthLogs.CONTENT_URI, DBContract.MonthLogs.C_USER_ID+"="+id,null);
-                            ((FloatingActionButton) findViewById(R.id.create)).setVisibility(View.VISIBLE);
-                            ((FloatingActionButton) findViewById(R.id.delete)).setVisibility(View.INVISIBLE);
-                            ((FloatingActionButton) findViewById(R.id.edit)).setVisibility(View.INVISIBLE);
-                            Toast.makeText(getApplicationContext(),"Customer Deleted.",Toast.LENGTH_SHORT).show();
+                            showDialog("Delete Customer.", "Are you sure?", null, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    getContentResolver().delete(DBContract.Users.CONTENT_URI, DBContract.Users._ID + "=" + id, null);
+                                    getContentResolver().delete(DBContract.MonthLogs.CONTENT_URI, DBContract.MonthLogs.C_USER_ID + "=" + id, null);
+                                    ((FloatingActionButton) findViewById(R.id.create)).setVisibility(View.VISIBLE);
+                                    ((FloatingActionButton) findViewById(R.id.delete)).setVisibility(View.INVISIBLE);
+                                    ((FloatingActionButton) findViewById(R.id.edit)).setVisibility(View.INVISIBLE);
+                                    Toast.makeText(getApplicationContext(), "Customer Deleted.", Toast.LENGTH_SHORT).show();
+                                }
+                            });
                         }
                     });
                     fab = (FloatingActionButton) findViewById(R.id.edit);
@@ -128,26 +147,11 @@ public class MyActivity extends AppCompatActivity
                             intent.putExtra(CreateActivity.USER_NAME,userName);
                             intent.putExtra(CreateActivity.USER_ADDRESS,userAddr);
                             startActivity(intent);
-//                            Toast.makeText(getApplicationContext(),"Edit functionality not yet available.",Toast.LENGTH_SHORT).show();
                         }
                     });
                 } else {
                     mSelectedItem = null;
                 }
-//                TextView delete = new TextView(parent.getContext());
-//                delete.setText("DELETE");
-//                delete.setBackgroundColor(Color.WHITE);
-//                delete.setOnClickListener(new View.OnClickListener() {
-//                    @Override
-//                    public void onClick(View v) {
-//                    }
-//                });
-//                ViewGroup deletePop = new RelativeLayout(parent.getContext());
-//                deletePop.addView(delete);
-//                PopupWindow popupWindow = new PopupWindow(deletePop,400,400);
-//                int[] location = new int[2];
-//                view.getLocationOnScreen(location);
-//                popupWindow.showAtLocation(parent, Gravity.NO_GRAVITY,parent.getWidth()-deletePop.getWidth(),location[1]);
                 return true;
             }
         });
@@ -166,45 +170,135 @@ public class MyActivity extends AppCompatActivity
         }
     }
 
+    public void showDialog(String title, String message, DialogInterface.OnClickListener noClick, DialogInterface.OnClickListener yesClick) {
+        new AlertDialog.Builder(MyActivity.this)
+                .setTitle(title)
+                .setMessage(message)
+                .setNegativeButton(android.R.string.no, noClick)
+                .setPositiveButton(android.R.string.yes, yesClick)
+                .create()
+                .show();
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_my, menu);
+        SearchView searchView = (SearchView)menu.findItem(R.id.action_search).getActionView();
+        searchView.setIconifiedByDefault(true);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                mAdapter.swapCursor(new FilterCursorWrapper(((CursorWrapper)mFilterCursor).getWrappedCursor(),query));
+                mAdapter.notifyDataSetChanged();
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                mAdapter.swapCursor(new FilterCursorWrapper(((CursorWrapper)mFilterCursor).getWrappedCursor(),newText));
+                mAdapter.notifyDataSetChanged();
+                return false;
+            }
+        });
+        searchView.setQueryHint("Search here");
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_import) {
+            showDialog("Import File.", "All existing records will be overwritten. Continue?", null, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    importDBFile();
+                    if(mImportStatus) {
+                        getApplicationContext().getContentResolver().notifyChange(DBContract.Users.CONTENT_URI,null);
+                        Toast.makeText(getApplicationContext(), "File Imported.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(getApplicationContext(), "Import Failed!!ll", Toast.LENGTH_SHORT).show();
+                    }
+                    mImportStatus = false;
+                }
+            });
+            return true;
+        } else if (id == R.id.action_export) {
+            if(exportDBFile()) {
+                Toast.makeText(getApplicationContext(), "File Exported.", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getApplicationContext(), "Export Failed!!", Toast.LENGTH_SHORT).show();
+            }
             return true;
         }
-
         return super.onOptionsItemSelected(item);
+    }
+
+    public void importDBFile() {
+        File dir = new File(Environment.getExternalStorageDirectory(), "MilkLog");
+        File importFrom = new File(dir, DBHelper.DATABASE_NAME);
+        if(!importFrom.exists()) {
+            mImportStatus =  false;
+        } else {
+            mImportStatus = fileTransfer(importFrom,DBHelper.DATABASE_FILE);
+        }
+    }
+
+    public static boolean exportDBFile() {
+        File dir = new File(Environment.getExternalStorageDirectory(), "MilkLog");
+        if(!dir.exists()) {
+            dir.mkdirs();
+        }
+        File exportTo = new File(dir,DBHelper.DATABASE_NAME);
+        try {
+            exportTo.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return fileTransfer(DBHelper.DATABASE_FILE,exportTo);
+    }
+
+    public static boolean fileTransfer(File from, File to) {
+        FileChannel fromChannel = null;
+        FileChannel toChannel = null;
+        try {
+            fromChannel = new FileInputStream(from).getChannel();
+            toChannel = new FileOutputStream(to).getChannel();
+            fromChannel.transferTo(0,fromChannel.size(),toChannel);
+        } catch(Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                fromChannel.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            try {
+                toChannel.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return true;
     }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         String[] projection = new String[] {DBContract.Users._ID,DBContract.Users.C_NAME, DBContract.Users.C_ADDRESS};
-//        String selection = "(1=1)";
-        return new CursorLoader(this, DBContract.Users.CONTENT_URI, projection, mSelection, null, null);
+        return new CursorLoader(this, DBContract.Users.CONTENT_URI, projection, mSelection, null, DBContract.Users.C_NAME);
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         System.out.println(data.getCount());
-        mAdapter.swapCursor(data);
+        mFilterCursor = new FilterCursorWrapper(data,"");
+        mAdapter.swapCursor(mFilterCursor);
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
         mAdapter.swapCursor(null);
     }
-
-
 }
